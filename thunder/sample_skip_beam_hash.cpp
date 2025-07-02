@@ -78,6 +78,8 @@ int main()
     };
     State state;
     BeamSearchUser::Node root(Action(), /*cost*/ 0, /*hash*/ 0);
-    beam_search.beam_search(config, state, root);
+    auto output =
+        beam_search.beam_search(config, state, root);
+    // outputを問題設定に従い標準出力に掃き出す
     return 0;
 }
