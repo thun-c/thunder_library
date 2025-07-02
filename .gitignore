@@ -1,0 +1,10 @@
+**/target/
+**/Cargo.lock
+**/tools/vis.html
+**/.vscode/
+tools/in/
+tools/out/
+tools/err/
+build/
+thunder/combined/
+pahcer/
