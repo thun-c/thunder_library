@@ -42,7 +42,7 @@ public:
             Hash new_hash;      // move_forward内か、その後にthisから計算すると楽
             Cost new_cost;      // move_forward内か、その後にthisから計算すると楽
             bool finished;      // ターン最小化問題で問題を解き終わったか
-            int skip_count = 1; // 何ターン後に遷移するか。通常は1
+            int skip_count = 1; // 何ターン後に遷移するか。通常は1。ライブラリ公開後にターンスキップ機能のバグが見つかったため、1のみを推奨
             // move_backward(new_action);// 自由だが、ここでmove_forwardすると楽
 
             multi_selectors.push(new_action, new_cost, new_hash, parent, finished, skip_count);
