@@ -58,6 +58,13 @@ public:
     void move_backward(const Action action)
     {
     }
+
+    /// @brief TODO: 初期状態のコストとハッシュを返す
+    /// @return 初期状態のコストとハッシュ
+    pair<Cost, Hash> make_initial_node()
+    {
+        return {0, 0};
+    }
 };
 
 // TODO: Hash,Action,Cost,StateBase の定義より後に以下を記述

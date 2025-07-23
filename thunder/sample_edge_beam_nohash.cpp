@@ -54,6 +54,13 @@ public:
     void move_backward(const Action action)
     {
     }
+
+    /// @brief TODO: 初期状態のコストを返す
+    /// @return 初期状態のコスト
+    Cost make_initial_node()
+    {
+        return 0;
+    }
 };
 
 // TODO: Action,Cost,StateBase の定義より後に以下を記述

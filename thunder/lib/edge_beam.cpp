@@ -113,6 +113,7 @@ namespace edge_beam_library
                                { state.expand(std::declval<int>(), selector) } -> same_as<void>;
                                { state.move_forward(std::declval<ActionType>()) } -> same_as<void>;
                                { state.move_backward(std::declval<ActionType>()) } -> same_as<void>;
+                               { state.make_initial_node() } -> same_as<pair<CostType, HashType>>;
                            };
 
     template <HashConcept Hash, typename Action, CostConcept Cost, template <typename> class State>
@@ -504,19 +505,24 @@ namespace edge_beam_library
                 if (selector.have_finished())
                 {
                     // ターン数最小化型の問題で実行可能解が見つかったとき
-                    Candidate candidate = selector.get_finished_candidates()[0];
-                    vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
-                    ret.push_back(candidate.action);
                     if (config.return_finished_immediately)
                     {
+                        Candidate candidate = selector.get_finished_candidates()[0];
+                        vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
+                        ret.push_back(candidate.action);
                         return ret;
                     }
                     else
                     {
-                        if (best_cost > candidate.cost)
+                        for (auto candidate : selector.get_finished_candidates())
                         {
-                            best_cost = candidate.cost;
-                            best_ret = ret;
+                            vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
+                            ret.push_back(candidate.action);
+                            if (candidate.cost < best_cost)
+                            {
+                                best_cost = candidate.cost;
+                                best_ret = ret;
+                            }
                         }
                     }
                     selector.clear_finished_candidates();
@@ -560,6 +566,7 @@ namespace edge_beam_library
             { state.expand(std::declval<int>(), selector) } -> same_as<void>;
             { state.move_forward(std::declval<ActionType>()) } -> same_as<void>;
             { state.move_backward(std::declval<ActionType>()) } -> same_as<void>;
+            { state.make_initial_node() } -> CostConcept;
         };
 
     template <typename Action, CostConcept Cost, template <typename> class State>
@@ -915,19 +922,24 @@ namespace edge_beam_library
                 if (selector.have_finished())
                 {
                     // ターン数最小化型の問題で実行可能解が見つかったとき
-                    Candidate candidate = selector.get_finished_candidates()[0];
-                    vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
-                    ret.push_back(candidate.action);
                     if (config.return_finished_immediately)
                     {
+                        Candidate candidate = selector.get_finished_candidates()[0];
+                        vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
+                        ret.push_back(candidate.action);
                         return ret;
                     }
                     else
                     {
-                        if (best_cost > candidate.cost)
+                        for (auto candidate : selector.get_finished_candidates())
                         {
-                            best_cost = candidate.cost;
-                            best_ret = ret;
+                            vector<Action> ret = tree.calculate_path(candidate.parent, turn + 1);
+                            ret.push_back(candidate.action);
+                            if (candidate.cost < best_cost)
+                            {
+                                best_cost = candidate.cost;
+                                best_ret = ret;
+                            }
                         }
                     }
                     selector.clear_finished_candidates();
@@ -940,7 +952,6 @@ namespace edge_beam_library
 
                 if (turn == config.max_turn - 1)
                 {
-                    assert(selector.select().empty());
                     // ターン数固定型の問題で全ターンが終了したとき
                     Candidate best_candidate = selector.calculate_best_candidate();
                     vector<Action> ret = tree.calculate_path(best_candidate.parent, turn + 1);
