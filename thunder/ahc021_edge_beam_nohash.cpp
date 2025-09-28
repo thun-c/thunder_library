@@ -20,7 +20,7 @@ constexpr int n = 30;
 constexpr int m = n * (n + 1) / 2;
 
 constexpr int max_turn = 10000;
-constexpr size_t beam_width = 1700;
+constexpr size_t beam_width = 1650;
 constexpr size_t tour_capacity = 15 * beam_width;
 constexpr uint32_t hash_map_capacity = 16 * 3 * beam_width;
 constexpr int target_coefficient = 600;

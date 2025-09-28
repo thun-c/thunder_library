@@ -415,6 +415,7 @@ namespace skip_beam_library
             Hash hash;
             int parent, child, left, right;
             bool active;
+            int remove_check_turn;
 
             // 根のコンストラクタ
             Node(Action action, Cost cost, Hash hash) : action(action),
@@ -424,7 +425,8 @@ namespace skip_beam_library
                                                         child(-1),
                                                         left(-1),
                                                         right(-1),
-                                                        active(true) {}
+                                                        active(true),
+                                                        remove_check_turn(-1) {}
 
             // 通常のコンストラクタ
             Node(const Candidate &candidate, int right) : action(candidate.action),
@@ -434,7 +436,8 @@ namespace skip_beam_library
                                                           child(-1),
                                                           left(-1),
                                                           right(right),
-                                                          active(true) {}
+                                                          active(true),
+                                                          remove_check_turn(-1) {}
         };
 
         // 二重連鎖木に対する操作をまとめたクラス
@@ -448,10 +451,10 @@ namespace skip_beam_library
             }
 
             // 状態を更新しながら深さ優先探索を行い、次のノードの候補を全てselectorに追加する
-            void dfs(MultiSelectors &multi_selectors)
+            void dfs(MultiSelectors &multi_selectors, int turn)
             {
-                remove_useless_nodes();
-                update_root();
+                remove_useless_nodes(turn);
+                update_root(turn);
 
                 int v = root_;
 
@@ -471,7 +474,9 @@ namespace skip_beam_library
                     {
                         remove_nodes_.emplace_back();
                     }
+                    // 削除可能か確認するターンを設定する
                     remove_nodes_[multi_selectors.get_step_max() - 1].push_back(v);
+                    nodes_[v].remove_check_turn = turn + multi_selectors.get_step_max();
 
                     v = move_to_ancestor(v);
                     if (v == root_)
@@ -532,10 +537,11 @@ namespace skip_beam_library
             deque<vector<int>> remove_nodes_;
 
             // 根から一本道の部分は往復しないようにする
-            void update_root()
+            void update_root(int turn)
             {
                 int child = nodes_[root_].child;
-                while (child != -1 && nodes_[child].right == -1)
+                // 後で子供が追加されうるノードはスキップしないようにする
+                while (child != -1 && nodes_[child].right == -1 && nodes_[root_].remove_check_turn <= turn)
                 {
                     root_ = child;
                     state_.move_forward(nodes_[child].action);
@@ -588,7 +594,7 @@ namespace skip_beam_library
             }
 
             // 不要になったノードを全て削除する
-            void remove_useless_nodes()
+            void remove_useless_nodes(int turn)
             {
                 if (remove_nodes_.empty())
                 {
@@ -598,7 +604,7 @@ namespace skip_beam_library
                 {
                     if (nodes_[v].child == -1)
                     {
-                        remove_leaf(v);
+                        remove_leaf(v, turn);
                     }
                 }
 
@@ -610,10 +616,15 @@ namespace skip_beam_library
             }
 
             // 不要になった葉を再帰的に削除する
-            void remove_leaf(int v)
+            void remove_leaf(int v, int turn)
             {
                 while (true)
                 {
+                    if (nodes_[v].remove_check_turn > turn)
+                    {
+                        // 子供が追加される可能性があるので削除しない
+                        return;
+                    }
                     int left = nodes_[v].left;
                     int right = nodes_[v].right;
                     if (left == -1)
@@ -659,7 +670,7 @@ namespace skip_beam_library
             for (int turn = 0; turn < config.max_turn; ++turn)
             {
                 // Euler Tour で selector に候補を追加する
-                tree.dfs(multi_selectors);
+                tree.dfs(multi_selectors, turn);
 
                 Selector selector = multi_selectors.pop_selector();
                 if (selector.have_finished())
@@ -928,6 +939,7 @@ namespace skip_beam_library
             Cost cost;
             int parent, child, left, right;
             bool active;
+            int remove_check_turn;
 
             // 根のコンストラクタ
             Node(Action action, Cost cost) : action(action),
@@ -936,7 +948,8 @@ namespace skip_beam_library
                                              child(-1),
                                              left(-1),
                                              right(-1),
-                                             active(true) {}
+                                             active(true),
+                                             remove_check_turn(-1) {}
 
             // 通常のコンストラクタ
             Node(const Candidate &candidate, int right) : action(candidate.action),
@@ -945,7 +958,8 @@ namespace skip_beam_library
                                                           child(-1),
                                                           left(-1),
                                                           right(right),
-                                                          active(true) {}
+                                                          active(true),
+                                                          remove_check_turn(-1) {}
         };
 
         // 二重連鎖木に対する操作をまとめたクラス
@@ -959,10 +973,10 @@ namespace skip_beam_library
             }
 
             // 状態を更新しながら深さ優先探索を行い、次のノードの候補を全てselectorに追加する
-            void dfs(MultiSelectors &multi_selectors)
+            void dfs(MultiSelectors &multi_selectors, int turn)
             {
-                remove_useless_nodes();
-                update_root();
+                remove_useless_nodes(turn);
+                update_root(turn);
 
                 int v = root_;
 
@@ -982,7 +996,9 @@ namespace skip_beam_library
                     {
                         remove_nodes_.emplace_back();
                     }
+                    // 削除可能か確認するターンを設定する
                     remove_nodes_[multi_selectors.get_step_max() - 1].push_back(v);
+                    nodes_[v].remove_check_turn = turn + multi_selectors.get_step_max();
 
                     v = move_to_ancestor(v);
                     if (v == root_)
@@ -1043,10 +1059,11 @@ namespace skip_beam_library
             deque<vector<int>> remove_nodes_;
 
             // 根から一本道の部分は往復しないようにする
-            void update_root()
+            void update_root(int turn)
             {
                 int child = nodes_[root_].child;
-                while (child != -1 && nodes_[child].right == -1)
+                // 後で子供が追加されうるノードはスキップしないようにする
+                while (child != -1 && nodes_[child].right == -1 && nodes_[root_].remove_check_turn <= turn)
                 {
                     root_ = child;
                     state_.move_forward(nodes_[child].action);
@@ -1099,7 +1116,7 @@ namespace skip_beam_library
             }
 
             // 不要になったノードを全て削除する
-            void remove_useless_nodes()
+            void remove_useless_nodes(int turn)
             {
                 if (remove_nodes_.empty())
                 {
@@ -1109,7 +1126,7 @@ namespace skip_beam_library
                 {
                     if (nodes_[v].child == -1)
                     {
-                        remove_leaf(v);
+                        remove_leaf(v, turn);
                     }
                 }
 
@@ -1121,10 +1138,15 @@ namespace skip_beam_library
             }
 
             // 不要になった葉を再帰的に削除する
-            void remove_leaf(int v)
+            void remove_leaf(int v, int turn)
             {
                 while (true)
                 {
+                    if (nodes_[v].remove_check_turn > turn)
+                    {
+                        // 子供が追加される可能性があるので削除しない
+                        return;
+                    }
                     int left = nodes_[v].left;
                     int right = nodes_[v].right;
                     if (left == -1)
@@ -1170,7 +1192,7 @@ namespace skip_beam_library
             for (int turn = 0; turn < config.max_turn; ++turn)
             {
                 // Euler Tour で selector に候補を追加する
-                tree.dfs(multi_selectors);
+                tree.dfs(multi_selectors, turn);
 
                 Selector selector = multi_selectors.pop_selector();
                 if (selector.have_finished())
